@@ -39,15 +39,7 @@ export async function POST(request: Request) {
     )
 
     // 4. 设置 cookie
-    cookies().set('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 // 24 hours
-    })
-
-    // 5. 返回用户信息
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
@@ -57,7 +49,16 @@ export async function POST(request: Request) {
         permissions: user.permissions,
         status: user.status
       }
-    })
+    });
+
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

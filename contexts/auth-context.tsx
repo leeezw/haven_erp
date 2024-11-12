@@ -39,21 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const menus = await authApi.getUserMenus()
           setUserMenus(menus)
         } else if (pathname !== '/') {
-          toast({
-            title: "认证失败",
-            description: "请重新登录",
-            variant: "destructive"
-          })
           router.push('/login')
         }
       } catch (error) {
-        console.error('Auth check failed:', error)
         if (pathname !== '/' && pathname !== '/login') {
-          toast({
-            title: "认证失败",
-            description: error instanceof Error ? error.message : "请重新登录",
-            variant: "destructive"
-          })
           router.push('/login')
         }
       } finally {
@@ -67,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     try {
       const response = await authApi.login(username, password)
-      if (response.user) {
+      if (response?.user) {
         setUser(response.user)
         const menus = await authApi.getUserMenus()
         setUserMenus(menus)
@@ -75,12 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false
     } catch (error) {
-      console.error('Login failed:', error)
-      toast({
-        title: "登录失败",
-        description: error instanceof Error ? error.message : "用户名或密码错误",
-        variant: "destructive"
-      })
       return false
     }
   }
@@ -92,12 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserMenus([])
       router.push('/login')
     } catch (error) {
-      console.error('Logout failed:', error)
-      toast({
-        title: "退出失败",
-        description: error instanceof Error ? error.message : "请稍后重试",
-        variant: "destructive"
-      })
+      setUser(null)
+      setUserMenus([])
+      router.push('/login')
     }
   }
 
@@ -111,12 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const operations = await permissionApi.getOperations(menuCode)
       return operations
     } catch (error) {
-      console.error('Failed to get operations:', error)
-      toast({
-        title: "获取权限失败",
-        description: error instanceof Error ? error.message : "请刷新页面重试",
-        variant: "destructive"
-      })
       return []
     }
   }

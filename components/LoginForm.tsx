@@ -21,11 +21,9 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 表单验证
     if (!formData.username || !formData.password) {
       toast({
-        title: "登录失败",
-        description: "请输入用户名和密码",
+        title: "请输入用户名和密码",
         variant: "destructive"
       })
       return
@@ -36,24 +34,17 @@ export function LoginForm() {
     try {
       const success = await login(formData.username, formData.password)
       if (success) {
-        toast({
-          title: "登录成功",
-          description: "欢迎回来！",
-          variant: "success"
-        })
         router.push('/dashboard')
       } else {
         toast({
-          title: "登录失败",
-          description: "用户名或密码错误",
+          title: "用户名或密码错误",
           variant: "destructive"
         })
       }
     } catch (error) {
-      console.error('Login error:', error)
       toast({
         title: "登录失败",
-        description: error instanceof Error ? error.message : "未知错误",
+        description: "请稍后重试",
         variant: "destructive"
       })
     } finally {
