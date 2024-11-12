@@ -21,7 +21,7 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 1. 表单验证
+    // 表单验证
     if (!formData.username || !formData.password) {
       toast({
         title: "登录失败",
@@ -34,11 +34,13 @@ export function LoginForm() {
     setIsLoading(true)
     
     try {
-      // 2. 调用登录
       const success = await login(formData.username, formData.password)
-      
-      // 3. 处理结果
       if (success) {
+        toast({
+          title: "登录成功",
+          description: "欢迎回来！",
+          variant: "success"
+        })
         router.push('/dashboard')
       } else {
         toast({

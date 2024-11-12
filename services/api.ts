@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toast } from '@/components/ui/use-toast'
 import { Deity, Department, Rank, PaginatedResponse, User, LoginResponse, LoginRequest, Permission, Role } from '@/types'
 
 const api = axios.create({
@@ -9,17 +10,29 @@ const api = axios.create({
 // 添加响应拦截器
 api.interceptors.response.use(
   response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      // 如果是登录接口返回 401，直接抛出错误
-      if (error.config.url === '/auth/login') {
-        throw error
-      }
-      
-      // 其他接口返回 401，重定向到登录页
-      window.location.href = '/login'
+  error => {
+    // 处理错误响应
+    const errorMessage = error.response?.data?.error || error.message || '操作失败'
+    
+    // 如果是登录接口的错误，不显示 toast，而是返回错误让组件处理
+    if (error.config.url === '/auth/login') {
+      return Promise.reject(new Error('用户名或密码错误'))
     }
-    throw error
+
+    // 如果是 401 未授权错误，重定向到登录页
+    if (error.response?.status === 401) {
+      window.location.href = '/login'
+      return Promise.reject(new Error('请重新登录'))
+    }
+
+    // 其他错误显示 toast 提示
+    toast({
+      title: "操作失败",
+      description: errorMessage,
+      variant: "destructive"
+    })
+
+    return Promise.reject(new Error(errorMessage))
   }
 )
 
@@ -105,20 +118,35 @@ export const rankApi = {
 export const authApi = {
   // 登录
   login: async (username: string, password: string) => {
-    const { data } = await api.post<LoginResponse>('/auth/login', { username, password })
-    return data
+    try {
+      const { data } = await api.post<LoginResponse>('/auth/login', { username, password })
+      return data
+    } catch (error) {
+      // 登录失败时返回 null，而不是抛出错误
+      return null
+    }
   },
 
   // 登出
   logout: async () => {
-    const { data } = await api.post('/auth/logout')
-    return data
+    try {
+      const { data } = await api.post('/auth/logout')
+      return data
+    } catch (error) {
+      // 登出失败时返回 false
+      return false
+    }
   },
 
   // 获取当前用户信息
   getCurrentUser: async () => {
-    const { data } = await api.get<User>('/auth/me')
-    return data
+    try {
+      const { data } = await api.get<User>('/auth/me')
+      return data
+    } catch (error) {
+      // 获取用户信息失败时返回 null
+      return null
+    }
   },
 
   // 获取用户权限

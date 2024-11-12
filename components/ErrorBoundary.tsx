@@ -1,49 +1,52 @@
 'use client'
 
-import { Component, ErrorInfo, ReactNode } from 'react'
+import React from 'react'
+import { useToast } from "@/components/ui/use-toast"
 
 interface Props {
-  children: ReactNode
+  children: React.ReactNode
 }
 
-interface State {
-  hasError: boolean
-  error?: Error
-}
+export default function ErrorBoundary({ children }: Props) {
+  const { toast } = useToast()
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
+  // 全局错误处理
+  const handleError = (error: Error) => {
+    console.error('Global error:', error)
+    
+    // 显示友好的错误提示
+    toast({
+      title: "操作失败",
+      description: error.message || "发生了一些错误，请稍后重试",
+      variant: "destructive"
+    })
   }
 
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
-  }
-
-  public render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-          <div className="bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">出错了！</h2>
-            <p className="text-gray-600 mb-4">系统遇到了一些问题，请稍后再试。</p>
-            <button
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-              onClick={() => this.setState({ hasError: false })}
-            >
-              重试
-            </button>
-          </div>
-        </div>
-      )
+  // 捕获未处理的 Promise 异常
+  React.useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault()
+      handleError(event.reason)
     }
 
-    return this.props.children
-  }
-}
+    // 捕获运行时错误
+    const handleError = (event: ErrorEvent) => {
+      event.preventDefault()
+      handleError(event.error)
+    }
 
-export default ErrorBoundary 
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    window.addEventListener('error', handleError)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      window.removeEventListener('error', handleError)
+    }
+  }, [])
+
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      {children}
+    </React.Suspense>
+  )
+} 

@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { User, Permission } from '@/types'
 import { authApi, permissionApi } from '@/services/api'
 import { useRouter, usePathname } from 'next/navigation'
+import { useToast } from "@/components/ui/use-toast"
 
 interface AuthContextType {
   user: User | null
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
+  const { toast } = useToast()
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,11 +39,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const menus = await authApi.getUserMenus()
           setUserMenus(menus)
         } else if (pathname !== '/') {
+          toast({
+            title: "认证失败",
+            description: "请重新登录",
+            variant: "destructive"
+          })
           router.push('/login')
         }
       } catch (error) {
         console.error('Auth check failed:', error)
         if (pathname !== '/' && pathname !== '/login') {
+          toast({
+            title: "认证失败",
+            description: error instanceof Error ? error.message : "请重新登录",
+            variant: "destructive"
+          })
           router.push('/login')
         }
       } finally {
@@ -64,6 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false
     } catch (error) {
       console.error('Login failed:', error)
+      toast({
+        title: "登录失败",
+        description: error instanceof Error ? error.message : "用户名或密码错误",
+        variant: "destructive"
+      })
       return false
     }
   }
@@ -76,6 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/login')
     } catch (error) {
       console.error('Logout failed:', error)
+      toast({
+        title: "退出失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+        variant: "destructive"
+      })
     }
   }
 
@@ -90,6 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return operations
     } catch (error) {
       console.error('Failed to get operations:', error)
+      toast({
+        title: "获取权限失败",
+        description: error instanceof Error ? error.message : "请刷新页面重试",
+        variant: "destructive"
+      })
       return []
     }
   }
